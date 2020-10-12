@@ -1,0 +1,188 @@
+package CSVParser;
+
+import release.Album;
+import release.Artist;
+import release.Release;
+import release.Song;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Scanner;
+
+/**
+ * Reads the csv files in to the databases
+ * @author Trey Pachucki ttp2542@rit.edu
+ */
+public class CSVReader {
+
+    /**
+     * Function to create the map of artists <GUID, Artist>.
+     * @return The updated HashMap
+     */
+    public static HashMap<String, Release> readArtists(String fileName, boolean lib) {
+        File artistFile = new File(fileName);
+        if(!artistFile.exists()){
+            return new HashMap<>();
+        }
+        Scanner in;
+        HashMap<String, Release> artistMap = new HashMap<>();
+        try {
+            String fullFileContents = new String(Files.readAllBytes(artistFile.toPath()));
+            in = new Scanner(fullFileContents);
+            while(in.hasNextLine()){
+                String line = in.nextLine();
+                String[] split = readLine(line);
+                String GUID = split[0];
+                String name = split[1];
+                String disambiguation = split[2];
+                Artist artist = new Artist(GUID, name, disambiguation);
+                if(lib){
+                    artist.setRating(Integer.parseInt(split[3]));
+                }
+                artistMap.put(split[0], artist);
+            }
+
+        }catch (IOException exception){
+            //squash
+        }
+
+        return artistMap;
+    }
+
+    /**
+     * Reads the song files
+     * @return The finished songMap
+     */
+    public static HashMap<String, Release> readSongs(String fileName, HashMap<String, Release> artists, boolean lib){
+        File songFile = new File(fileName);
+        if(!songFile.exists()){
+            return new HashMap<>();
+        }
+        HashMap<String, Release> songMap = new HashMap<>();
+        try {
+            String fullFileContents = new String(Files.readAllBytes(songFile.toPath()));
+            Scanner in = new Scanner(fullFileContents);
+
+            while (in.hasNext()) {
+                String line = in.nextLine();
+                String[] songSplit = readLine(line);
+                String songGUID = songSplit[0];
+                String songArtistGUID = songSplit[1];
+                Release artist = artists.get(songArtistGUID);
+                long duration = Long.parseLong(songSplit[2]);
+                String title = songSplit[3];
+                Release song = new Song(songGUID, title, artist, duration);
+                if(lib){
+                    song.setRating(Integer.parseInt(songSplit[4]));
+                }
+                songMap.put(songGUID, song);
+
+            }
+        }catch(IOException exception){
+            //squash
+        }
+        return songMap;
+    }
+
+    /**
+     * Reads the album csv file and creates a hashmap
+     * @return A finished Album Hashmap
+     */
+    public static HashMap<String, Release> readAlbums(String fileName, HashMap<String, Release> songs,
+                                                      HashMap<String, Release> artists, boolean lib){
+        File albumFile = new File(fileName);
+        if(!albumFile.exists()){
+            return new HashMap<>();
+        }
+        HashMap<String, Release> albums = new HashMap<>();
+        try {
+            String fullFileContents = new String(Files.readAllBytes(albumFile.toPath()));
+            Scanner in = new Scanner(fullFileContents);
+
+            while(in.hasNextLine()){
+                String line = in.nextLine();
+                String[] albumSplit = readLine(line);
+                String GUID = albumSplit[0];
+                String artistGUID = albumSplit[1];
+
+                String title = albumSplit[2];
+                String medium = albumSplit[3];
+                String release = albumSplit[4];
+                ArrayList<Release> trackList = new ArrayList<>();
+                Release artist = artists.get(artistGUID);
+                int length = albumSplit.length - 1;
+                if(lib){
+                    length -= 1;
+                }
+                for(int i = 5; i < length; i++){
+                    Release song = songs.get(albumSplit[i]);
+                    trackList.add(song);
+                }
+
+                Release album = new Album(GUID, title, artist, medium, release, trackList);
+                if(lib){
+                    album.setRating(Integer.parseInt(albumSplit[albumSplit.length -1]));
+                }
+                albums.put(GUID, album);
+            }
+        }catch(IOException io){
+            //squash
+        }
+
+        return albums;
+    }
+
+    /**
+     * Function to read a single line of CSV, can read any line
+     * @param string The csv line
+     * @return the new String array
+     */
+    private static String[] readLine(String string){
+        ArrayList<String> fields = new ArrayList<>();
+        StringBuilder buildAString = new StringBuilder();
+        boolean openQuote = false;
+        int starter = 0;
+        for(int i = 0; i < string.length(); i++){
+            //checking for an open quote at the beginning
+            if(i == starter && string.charAt(starter) == '"') {
+                openQuote = true;
+
+            //edge case if quotation mark at end
+            }else if(string.charAt(i) == '"' && i == string.length() - 1){
+                //assert true acts as a pass
+                assert true;
+
+            //checking for closing quote without double quote
+            }else if(string.charAt(i) == '"' && string.charAt(i + 1) != '"'){
+                openQuote = false;
+
+            //Checking for back to back quote case
+            }else if(string.charAt(i) == '"' && string.charAt(i + 1) == '"') {
+                buildAString.append('"');
+                i++;
+
+            //Checking for comma
+            }else if(!openQuote && string.charAt(i) == ',') {
+                fields.add(buildAString.toString());
+                starter = i + 1;
+                buildAString.setLength(0);
+            }else if(string.charAt(i) == '\n'){
+                fields.add(buildAString.toString());
+            }else{
+                buildAString.append(string.charAt(i));
+            }
+        }
+
+        fields.add(buildAString.toString());
+        String[] finalFields = new String[fields.size()];
+        for(int i = 0; i < fields.size(); i++){
+            finalFields[i] = fields.get(i);
+        }
+        return finalFields;
+    }
+
+}
