@@ -1,0 +1,110 @@
+package release;
+
+import java.util.ArrayList;
+import java.util.Date;
+
+public class Album implements Release {
+    private String GUID;
+    private String title;
+    private Release artist;
+    private String issueDate;
+    private String medium;
+    private ArrayList<Release> trackList;
+    private int rating;
+    private String acquisitionDate;
+
+    public Album(String GUID, String title, Release artist, String issueDate, String medium, ArrayList<Release> trackList){
+        this.GUID = GUID;
+        this.title = title;
+        this.artist = artist;
+        this.issueDate = issueDate;
+        this.medium = medium;
+        this.trackList = trackList;
+    }
+
+    public void setAcquisitionDate(String acquisitionDate){
+        this.acquisitionDate = acquisitionDate;
+    }
+
+    public String getAcquisitionDate(){
+        return this.acquisitionDate;
+    }
+
+    @Override
+    public void setRating(int rating) {
+        this.rating = rating;
+    }
+
+    @Override
+    public int getRating() {
+        return rating;
+    }
+
+    @Override
+    public String getGUID() {
+        return this.GUID;
+    }
+
+    @Override
+    public String getTitle() {
+        return this.title;
+    }
+
+    @Override
+    public Release getArtist() {
+        return this.artist;
+    }
+
+    @Override
+    public String getIssueDate() {
+        return this.issueDate;
+    }
+
+    @Override
+    public String getMedium() {
+        return this.medium;
+    }
+
+    @Override
+    public ArrayList<Release> getTrackList() {
+        return this.trackList;
+    }
+
+    public long getDuration(){
+        long dur = 0;
+        for(int i = 0; i < trackList.size(); i++){
+            dur += trackList.get(i).getDuration();
+        }
+
+        return dur;
+    }
+
+    @Override
+    public String getArtistName(){
+        return this.artist.getTitle();
+    }
+
+    public void setArtist(Release artist){
+        this.artist = artist;
+    }
+
+    @Override
+    public String toString(){
+        double dur = (double)getDuration()/60000;
+        String s = "Title: " + title + "\nArtist: " + artist.getTitle() + "\nGUID: " + GUID +
+                "\nIssue Date: " + issueDate;
+        if(acquisitionDate != null){
+            s = s +"\nAcquisition Date: " + acquisitionDate;
+        }else{
+            s = s + "\nAcquisition Date: None";
+        }
+        s = s + "\nMedium: " + medium + "\nRating: " + rating +
+                "\nDuration: " + dur + "  minutes" + "\nTrack List: ";
+        for(Release track: trackList){
+            s = s + "\n\t" + track.getTitle();
+        }
+
+        s = s + "\n";
+        return s;
+    }
+}
