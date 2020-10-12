@@ -1,0 +1,243 @@
+package databases;
+
+import release.Release;
+
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Set;
+
+/**
+ * Class to act as a database by storing songs, artists, etc by GUID
+ * @author Trey Pachucki ttp2542@rit.edu
+ */
+public class Database {
+    private HashMap<String, Release> database;
+
+    /**
+     * Constructor for a database
+     * @param database: A database of Releases
+     */
+    public Database(HashMap<String, Release> database){
+        this.database = database;
+    }
+
+    /**
+     * Gets a release based on the GUID of the Release
+     * @param GUID: The key to the database hashmap
+     * @return The release
+     */
+    public Release getRelease(String GUID){
+        if(database.containsKey(GUID)) {
+            return this.database.get(GUID);
+        }
+        return null;
+    }
+
+    /**
+     * Gets the database, but only for classes in the same package (important
+     * information and variable)
+     * @return The database hashmap
+     */
+    protected HashMap<String, Release> getDatabase(){
+        return this.database;
+    }
+
+    /**
+     * Queries the database looking for a specific substring
+     * @param query: The string to look for matches
+     * @return Arraylist of releases.
+     */
+    public ArrayList<Release> searchName(String query){
+        ArrayList<Release> results = new ArrayList<>();
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            if(release.getTitle().contains(query)){
+                results.add(release);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Queries the database looking for a songs less then a duration
+     * @param query: The string to look for matches
+     * @return Arraylist of releases.
+     */
+    public ArrayList<Release> searchDurationLess(String query){
+        ArrayList<Release> results = new ArrayList<>();
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            if(release.getDuration() >= Long.parseLong(query)){
+                results.add(release);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Queries the database looking for songs longer then a duration
+     * @param query: The string to look for matches
+     * @return Arraylist of releases.
+     */
+    public ArrayList<Release> searchDurationMore(String query){
+        ArrayList<Release> results = new ArrayList<>();
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            if(release.getDuration() <= Long.parseLong(query)){
+                results.add(release);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Queries the database looking for matching artists
+     * @param query: The string to look for matches
+     * @return Arraylist of releases.
+     */
+    public ArrayList<Release> searchByArtist(String query){
+        ArrayList<Release> results = new ArrayList<>();
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            String artistName = release.getArtist().getTitle();
+            String artistGUID = release.getArtist().getGUID();
+            if(artistName.equals(query) || artistGUID.equals(query) ){
+                results.add(release);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Queries the database looking for a specific track
+     * @param query: The string to look for matches
+     * @return Arraylist of releases.
+     */
+    public ArrayList<Release> searchBySong(String query){
+        ArrayList<Release> results = new ArrayList<>();
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            ArrayList<Release> trackList = release.getTrackList();
+            for(Release r: trackList){
+                if(r.getGUID().equals(query) || r.getTitle().equals(query)){
+                    results.add(r);
+                }
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Queries the database looking for releases within a date range
+     * @param query: The string to look for matches
+     * @return Arraylist of releases.
+     */
+    public ArrayList<Release> searchByDate(String query){
+        ArrayList<Release> results = new ArrayList<>();
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
+        String[] dates = query.split(" ");
+        try {
+            Date low = format.parse(dates[0]);
+            Date high = format.parse(dates[1]);
+            for (String key : database.keySet()) {
+                Release r = database.get(key);
+                Date relDate = format.parse(r.getIssueDate());
+                if (relDate.after(low) && relDate.before(high)) {
+                    results.add(r);
+                }
+            }
+        }catch (ParseException pi){
+            System.out.println(pi.getMessage());
+        }
+        return results;
+    }
+
+    /**
+     * Queries the database looking for a specific substring
+     * @param query: The string to look for matches
+     * @return Arraylist of releases.
+     */
+    public ArrayList<Release> searchByRating(String query){
+        ArrayList<Release> results = new ArrayList<>();
+        int rating = Integer.parseInt(query);
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            if(release.getRating() >= rating){
+                results.add(release);
+            }
+        }
+        return results;
+    }
+
+    /**
+     * Queries the database looking for a specific substring
+     * @param query: The string to look for matches
+     * @return ArrayList of releases.
+     */
+    public ArrayList<Release> searchByRelease(String query){
+        ArrayList<Release> results = new ArrayList<>();
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            if(release.getTitle().equals(query) || release.getGUID().equals(query)){
+                results.addAll(release.getTrackList());
+            }
+        }
+        return results;
+    }
+    /**
+     * Gets the GUID of sa song based on its name
+     * @param name: The name of the song
+     * @return The songs GUID
+     */
+    public String getGUID(String name){
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            if(release.getTitle().equals(name)){
+                return key;
+            }
+        }
+        return "";
+    }
+
+    /**
+     * Adds a release to the database
+     * @param release: The release to be added
+     */
+    public void addRelease(Release release){
+        this.database.put(release.getGUID(), release);
+    }
+
+    /**
+     * Removes a release from the database
+     * @param GUID: The GUID of the release
+     */
+    public void removeRelease(String GUID){
+        this.database.remove(GUID);
+    }
+
+    /**
+     * Sees if the database has any songs by a specific artist
+     * @param GUID: The GUID of the artist
+     * @return boolean representation of if theres an artist
+     */
+    public boolean hasArtist(String GUID){
+        for(String key: database.keySet()){
+            Release release = database.get(key);
+            if(release.getArtistName().equals(GUID)){
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Gets the keyset for the database hashmap.
+     * @return The keys of the database ie GUID's
+     */
+    public Set<String> getKeys(){
+        return this.database.keySet();
+    }
+}
