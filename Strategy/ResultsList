@@ -1,0 +1,25 @@
+package Strategy;
+import release.*;
+
+import java.util.ArrayList;
+
+public class ResultsList {
+    private ResultsSorter sorter;
+    private ArrayList<Release> searchResults;
+
+    public ResultsList(ArrayList<Release> searchResults){
+        this.searchResults = searchResults;
+    }
+
+    public void setSorter(ResultsSorter sorter){
+        this.sorter = sorter;
+    }
+
+    public void sort(){
+        sorter.doSort(searchResults);
+    }
+
+    public ArrayList<Release> getList(){
+        return searchResults;
+    }
+}
